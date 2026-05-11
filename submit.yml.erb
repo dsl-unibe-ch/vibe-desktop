@@ -1,0 +1,34 @@
+---
+batch_connect:
+  template: "vnc_container"
+  set_host: "host=$(hostname -A | awk '{print $1}')"
+  websockify_cmd: "/usr/bin/websockify --verbose --log-file websockify.log"
+  before_script: "export JOBNAME=$(pwd | rev | cut -d '/' -f3 | rev) "
+  container_path: "/storage/research/dsl_vibe_rs/environments/$(pwd | rev | cut -d '/' -f3 | rev)/desktop/images/rocky9_minimal_xfce-latest.sif"
+  container_bindpath: "/scratch,/storage,/sys/fs/cgroup"
+  container_module: "Anaconda3"
+  container_command: "apptainer"
+  container_start_args:
+    - "--nv"
+script:
+  native:
+    - "-N 1"
+    - "--cpus-per-task=<%= global_cores.blank? ? 1 : global_cores.to_i %>"
+    - "--mem-per-cpu=<%= global_memcore.blank? ? 4 : global_memcore.to_i %>G"
+    - "--qos=<%= auto_qos %>"
+    - "--account=<%= auto_accounts %>"
+<%- if global_wckey.present? -%>
+    - "--wckey=<%= global_wckey %>"
+<%- end -%>
+    - "--time=<%= global_bc_num_hours.blank? ? 1 : global_bc_num_hours.to_i %>:00:00"
+    - "--job-name=$(pwd | rev | cut -d '/' -f3 | rev)"
+<%- if global_num_gpus.to_i > 0 -%>
+    - "--gres=gpu:<%= global_type_gpu.blank? ? rtx4090 : global_type_gpu %>:<%= global_num_gpus.blank? ? 1 : global_num_gpus %>"
+<%- end -%>
+<%- if email_on_start == "1" and not email.blank? -%>
+    - "--mail-type=BEGIN"
+    - "--mail-user=<%= email %>"
+<%- end -%>
+<%- if global_reservation.present? -%>
+    - "--reservation=<%= global_reservation %>"
+<%- end -%>

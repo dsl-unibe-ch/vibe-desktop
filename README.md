@@ -1,18 +1,18 @@
-# vibe-desktop
-Repository for the VIBE Desktop
+# vibe-desktop OnDemand Application 
 
-## About VIBE
-VIBE is a joined collaboration between the Microscopy Imaging Center (MIC) and Data Science Lab (DSL) at the university of Bern. Our goal is to provide a virtual desktop for image analysis which runs on UBELIX [https://www.id.unibe.ch/hpc], university of Bern's HPC based on SLURM[https://slurm.schedmd.com/], Open OnDemand[https://openondemand.org/] and Apptainer[https://apptainer.org/].
+The vibe-desktop provides a XFCE desktop environment inside an Apptainer container.
+It determines the job name from the SLURM working directory and uses it as environment name. This allows for different versions of the desktop to be run simutaniously without interference.
 
-## The vibe-desktop Repository
-This repository contains all information required to build the VIBE desktop, a virtual desktop environment based on Rocky Linux [https://rockylinux.org] and the XFCE desktop environment [https://xfce.org/]. It is containerized using the Apptainer [https://apptainer.org/] container environment.
+## Building the desktop container
 
-## Repository Structure
-This repsoitory holds the Apptainer Definition Files for building the desktop container inside the 'apptainer-build' folder.
-The configuration to deploy the VIBE Desktop as Open OnDemand application is located inside the 'ood-vibe' folder. There are multiple versions based on different base systems.
+The Apptainer definition file to build the desktop container is located inside the 'apptainer_definition_files' folder. Build it as described by [Apptainer(https://apptainer.org/docs/user/main/build_a_container.html)], make it available to the user and point the 'container_path' inside submit.yml.erb to it.
 
-## Building the Apptainer container
-Build the container using the provided Apptainer Definition File (.def)
+## Requirements
 
-## Deploying the Open OnDemand App
-The configuration files for Open OnDemand make the VIBE desktop container available to users.
+The desktop container requires the user_login_script.sh from the [vibe-utilities repository(https://github.com/dsl-unibe-ch/vibe-utilities)] to setup the user profile.
+
+## License
+
+* Documentation, website content, and logo is licensed under
+  [CC-BY-4.0](https://creativecommons.org/licenses/by/4.0/)
+* Code is licensed under MIT (see LICENSE.txt)

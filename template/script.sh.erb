@@ -1,0 +1,119 @@
+#!/usr/bin/env bash
+
+# Set working directory to home directory
+cd "${HOME}"
+
+echo "[OOD-App] Starting OOD application $JOBNAME"
+
+if [ -z $JOBNAME ]; then
+  echo "Error. No jobname provided by OOD App. Exiting."
+  exit 1
+fi
+
+export VIBE_STAGE=${JOBNAME}
+
+# Set the user folders
+export PROFILE_DIR="$HOME/.vibe/${VIBE_STAGE}"
+export XDG_CONFIG_HOME="${PROFILE_DIR}/.config"
+export XDG_CACHE_HOME="${PROFILE_DIR}/.cache"
+export XDG_DATA_HOME="${PROFILE_DIR}/.local/share"
+export XDG_STATE_HOME="${PROFILE_DIR}/.local/state"
+export XDG_RUNTIME_DIR=${TMPDIR}
+
+# Ensure the user folders exist
+/usr/bin/mkdir -p ${XDG_CONFIG_HOME}
+/usr/bin/mkdir -p ${XDG_CACHE_HOME}
+/usr/bin/mkdir -p ${XDG_DATA_HOME}
+/usr/bin/mkdir -p ${XDG_STATE_HOME}
+
+# Ensure the vibe-desktop cache folder is available
+mkdir -p "${PROFILE_DIR}/.cache/.vibe/"
+
+# Set the Apptainer environment
+## variables for the Desktop container
+export APPTAINERENV_DISPLAY=$DISPLAY
+export APPTAINERENV_XDG_CONFIG_HOME="$XDG_CONFIG_HOME"
+export APPTAINERENV_XDG_DATA_HOME="$XDG_DATA_HOME"
+export APPTAINERENV_XDG_CACHE_HOME="$XDG_CACHE_HOME"
+## variables for the Apptainer environment inside the desktop container
+export APPTAINERENV_APPTAINERENV_DISPLAY=$DISPLAY
+export APPTAINERENV_APPTAINERENV_XDG_CONFIG_HOME="$XDG_CONFIG_HOME"
+export APPTAINERENV_APPTAINERENV_XDG_DATA_HOME="$XDG_DATA_HOME"
+export APPTAINERENV_APPTAINERENV_XDG_CACHE_HOME="$XDG_CACHE_HOME"
+## We need to overwrite the $PROMPT_COMMAND variable inside containers as their might not provide a vte-profile
+export APPTAINERENV_APPTAINERENV_PROMPT_COMMAND='printf "\033]0;%s@%s:%s\007" "${USER}" "${HOSTNAME%%.*}" "${PWD/#$HOME/\~}"'
+
+# Launch d-bus
+eval $(dbus-launch --sh-syntax)
+
+# Launch Xfce Window Manager and Panel
+export SEND_256_COLORS_TO_REMOTE=1
+export APPTAINERENV_SEND_256_COLORS_TO_REMOTE="$SEND_256_COLORS_TO_REMOTE"
+
+export APPTAINERENV_DBUS_SESSION_BUS_ADDRESS=$DBUS_SESSION_BUS_ADDRESS
+export APPTAINERENV_DBUS_SESSION_BUS_PID=$DBUS_SESSION_BUS_PID
+
+# Remove any preconfigured monitors
+if [[ -f "${PROFILE_DIR}/.config/monitors.xml" ]]; then
+  mv "${PROFILE_DIR}/.config/monitors.xml" "${PROFILE_DIR}/.config/monitors.xml.bak"
+fi
+
+# Disable startup services
+apptainer exec instance://${INSTANCE_NAME} xfconf-query -c xfce4-session -p /startup/ssh-agent/enabled -n -t bool -s false
+apptainer exec instance://${INSTANCE_NAME} xfconf-query -c xfce4-session -p /startup/gpg-agent/enabled -n -t bool -s false
+
+# Disable useless services on autostart
+AUTOSTART="${XDG_CONFIG_HOME}/autostart"
+rm -fr "${AUTOSTART}"    # clean up previous autostarts
+mkdir -p "${AUTOSTART}"
+for service in "geoclue-demo-agent" "nm-applet" "org.gnome.Evolution-alarm-notify" "tracker-miner-fs-3" "xfce-polkit" "xfce4-power-manager" "xfce4-screensaver"; do
+  echo -e "[Desktop Entry]\nHidden=true" > "${AUTOSTART}/${service}.desktop"
+done
+
+## Copy over default panel if doesn't exist, otherwise it will prompt the user
+PANEL_CONFIG="${XDG_CONFIG_HOME}/xfce4/xfconf/xfce-perchannel-xml/xfce4-panel.xml"
+if [[ ! -e "${PANEL_CONFIG}" ]]; then
+  mkdir -p "$(dirname "${PANEL_CONFIG}")"
+  cp "/etc/xdg/xfce4/panel/default.xml" "${PANEL_CONFIG}"
+
+  # Remove useless panel plugins ( and power manager)
+  ## pulseaudio applet
+  if [ $(apptainer exec instance://${INSTANCE_NAME} xfconf-query -c xfce4-panel -p /plugins/plugin-8) == 'pulseaudio' ]; then
+    apptainer exec instance://${INSTANCE_NAME} xfconf-query -c xfce4-panel -p /plugins/plugin-8 -r
+  fi
+  ## power manager
+  if [ $(apptainer exec instance://${INSTANCE_NAME} xfconf-query -c xfce4-panel -p /plugins/plugin-9) == 'power-manager-plugin' ]; then
+    apptainer exec instance://${INSTANCE_NAME} xfconf-query -c xfce4-panel -p /plugins/plugin-9 -r
+  fi
+fi
+
+# Run Xfce4 Terminal as login shell (sets proper TERM)
+TERM_CONFIG="${XDG_CONFIG_HOME}/xfce4/terminal/terminalrc"
+if [[ ! -e "${TERM_CONFIG}" ]]; then
+  mkdir -p "$(dirname "${TERM_CONFIG}")"
+  sed 's/^ \{4\}//' > "${TERM_CONFIG}" << EOL
+    [Configuration]
+    CommandLoginShell=TRUE
+EOL
+else
+  sed -i \
+    '/^CommandLoginShell=/{h;s/=.*/=TRUE/};${x;/^$/{s//CommandLoginShell=TRUE/;H};x}' \
+    "${TERM_CONFIG}"
+fi
+
+# Ensure that the user's configured login shell is used
+export SHELL="$(getent passwd $USER | cut -d: -f7)"
+
+# use a safe PATH to boot the desktop because dbus-launch can be
+# in another location from a python/conda installation and that will
+# conflict and cause issues. See https://github.com/OSC/ondemand/issues/700 for more.
+SAFE_PATH="/usr/local/bin:/usr/bin:/usr/local/sbin:/usr/sbin:/bin"
+
+# call the login script to setup the user profile and session
+PATH="$SAFE_PATH" source /storage/research/dsl_vibe_rs/environments/${VIBE_STAGE}/scripts/user_login_script.sh
+
+export APPTAINERENV_PATH=$PATH
+
+sleep 5
+
+apptainer exec instance://$INSTANCE_NAME xfce4-session
