@@ -13,6 +13,4 @@ The desktop container requires the user_login_script.sh from the [vibe-utilities
 
 ## License
 
-* Documentation, website content, and logo is licensed under
-  [CC-BY-4.0](https://creativecommons.org/licenses/by/4.0/)
-* Code is licensed under MIT (see LICENSE.txt)
+* Code is licensed under BSD-3 (see LICENSE.md)
