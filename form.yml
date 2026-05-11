@@ -1,0 +1,46 @@
+---
+cluster: "ubelix"
+attributes:
+  desktop:
+    label: "Desktop Environment"
+    widget: select
+    options:
+      - "xfce"
+  bc_vnc_idle: 0
+  bc_vnc_resolution:
+    required: true
+  node_type: null
+  auto_accounts:
+    display: true
+  global_wckey:
+    display: true
+  auto_qos:
+    display: true
+  email:
+    widget: "text_field"
+    label: "Email"
+    help: |
+      Please provide a valid email address. Without this you will not receive a notification on start.
+  email_on_start:
+    widget: 'check_box'
+    html_options:
+      data:
+        hide-email-when-unchecked: true
+form:
+  - bc_vnc_idle
+  - bc_vnc_resolution
+  - auto_accounts
+  - global_wckey
+  - auto_qos
+  - global_reservation
+  - global_gpu_checkbox
+  - global_type_gpu
+  - global_instance
+  - global_cores
+  - global_memcore
+  - global_num_gpus
+  - global_bc_num_hours
+  - global_advanced_mode
+  - global_custom_environment
+  - email_on_start
+  - email

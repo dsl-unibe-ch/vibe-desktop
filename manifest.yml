@@ -1,0 +1,10 @@
+---
+name: VIBE Desktop 0.7.0
+icon: fa://desktop
+category: VIBE
+subcategory: VIBE
+role: batch_connect
+description: |
+  Runs the VIBE Desktop.
+  Support for VIBE is provided by the VIBE team.
+  Visit the [VIBE User Documentation](https://dsl-unibe-ch.github.io/vibe-documentation/) for more information.

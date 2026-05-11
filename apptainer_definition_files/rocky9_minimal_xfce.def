@@ -1,0 +1,39 @@
+Bootstrap: docker
+
+From: rockylinux/rockylinux:9-minimal
+
+%environment
+  PATH=/opt/TurboVNC/bin:$PATH
+  LANGUAGE="en_US.UTF-8"
+  LC_ALL="en_US.UTF-8"
+  LANG="en_US.UTF-8"
+
+%post
+  # base setup
+  microdnf -y install dnf
+  dnf install -y dnf-plugins-core
+  dnf -y update && dnf -y upgrade
+  dnf install -y epel-release
+
+  # XFCE desktop packages and dependencies
+  dnf install -y xfdesktop xfwm4 xfce4-session xfce4-settings xfce4-terminal xfce-polkit xfconf
+  dnf install -y apptainer
+  dnf install -y wget
+  dnf install -y python3-websockify perl
+
+  # Additional desktop packages
+  dnf install -y vte-profile tree ristretto mousepad nano vim
+  
+  # Install NVIDIA driver libraries
+  dnf config-manager --add-repo=https://developer.download.nvidia.com/compute/cuda/repos/rhel9/x86_64/cuda-rhel9.repo
+  dnf -y module enable nvidia-driver:550-dkms
+  dnf -y install nvidia-driver-cuda nvidia-driver-cuda-libs nvidia-driver-libs
+
+  # Install TurboVNC
+  wget -O /etc/yum.repos.d/TurboVNC.repo https://raw.githubusercontent.com/TurboVNC/repo/main/TurboVNC.repo
+  dnf install -y turbovnc
+
+  # Cleanup
+  dnf clean all
+  rm -rf /var/cache/dnf/*
+  rm -f /var/log/*.log
