@@ -13,22 +13,13 @@ batch_connect:
 script:
   native:
     - "-N 1"
-    - "--cpus-per-task=<%= global_cores.blank? ? 1 : global_cores.to_i %>"
-    - "--mem-per-cpu=<%= global_memcore.blank? ? 4 : global_memcore.to_i %>G"
-    - "--qos=<%= auto_qos %>"
-    - "--account=<%= auto_accounts %>"
-<%- if global_wckey.present? -%>
-    - "--wckey=<%= global_wckey %>"
-<%- end -%>
-    - "--time=<%= global_bc_num_hours.blank? ? 1 : global_bc_num_hours.to_i %>:00:00"
+    - "--cpus-per-task=4"
+    - "--mem-per-cpu=4G"
+    - "--qos=job_gratis"
+    - "--account=gratis"
+    - "--time=1:00:00"
     - "--job-name=$(pwd | rev | cut -d '/' -f3 | rev)"
-<%- if global_num_gpus.to_i > 0 -%>
-    - "--gres=gpu:<%= global_type_gpu.blank? ? rtx4090 : global_type_gpu %>:<%= global_num_gpus.blank? ? 1 : global_num_gpus %>"
-<%- end -%>
 <%- if email_on_start == "1" and not email.blank? -%>
     - "--mail-type=BEGIN"
     - "--mail-user=<%= email %>"
-<%- end -%>
-<%- if global_reservation.present? -%>
-    - "--reservation=<%= global_reservation %>"
 <%- end -%>
