@@ -5,7 +5,7 @@
 set -e
 
 # Get the stage the script is running in first
-RUNTIME_DIR=$(dirname $(readlink -f "$0"))
+RUNTIME_DIR=$(dirname $(dirname $(readlink -f "$0")))
 STAGE=${RUNTIME_DIR##*/}
 
 # Common locations of shared storage
