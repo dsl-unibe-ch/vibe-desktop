@@ -7,5 +7,7 @@ role: batch_connect
 description: |
   The limited demo version of the VIBE Desktop.
   This version does not offer GPU acceleration and is limited to 1 hour of use. Please get in touch with the VIBE team if you are interested in subscribing and want to test your work on the actual VIBE Desktop.
+
   Support for VIBE is provided by the VIBE team at support.vibe@unibe.ch.
+
   Visit the [VIBE User Documentation](https://dsl-unibe-ch.github.io/vibe-documentation/) for more information.
