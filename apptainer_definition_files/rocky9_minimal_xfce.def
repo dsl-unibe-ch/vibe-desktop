@@ -15,6 +15,11 @@ From: rockylinux/rockylinux:9-minimal
   dnf -y update && dnf -y upgrade
   dnf install -y epel-release
 
+  # Install NVIDIA driver libraries
+  dnf config-manager --add-repo=https://developer.download.nvidia.com/compute/cuda/repos/rhel9/x86_64/cuda-rhel9.repo
+  dnf -y module enable nvidia-driver:590-open
+  dnf -y install nvidia-driver-cuda nvidia-driver-cuda-libs nvidia-driver-libs
+
   # XFCE desktop packages and dependencies
   dnf install -y xfdesktop xfwm4 xfce4-session xfce4-settings xfce4-terminal xfce-polkit xfconf
   dnf install -y apptainer
@@ -24,11 +29,6 @@ From: rockylinux/rockylinux:9-minimal
   # Additional desktop packages
   dnf install -y vte-profile tree ristretto mousepad nano vim
   
-  # Install NVIDIA driver libraries
-  dnf config-manager --add-repo=https://developer.download.nvidia.com/compute/cuda/repos/rhel9/x86_64/cuda-rhel9.repo
-  dnf -y module enable nvidia-driver:550-dkms
-  dnf -y install nvidia-driver-cuda nvidia-driver-cuda-libs nvidia-driver-libs
-
   # Install TurboVNC
   wget -O /etc/yum.repos.d/TurboVNC.repo https://raw.githubusercontent.com/TurboVNC/repo/main/TurboVNC.repo
   dnf install -y turbovnc
