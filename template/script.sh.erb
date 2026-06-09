@@ -44,7 +44,7 @@ export APPTAINERENV_APPTAINERENV_XDG_CACHE_HOME="$XDG_CACHE_HOME"
 export APPTAINERENV_APPTAINERENV_PROMPT_COMMAND='printf "\033]0;%s@%s:%s\007" "${USER}" "${HOSTNAME%%.*}" "${PWD/#$HOME/\~}"'
 
 # Launch d-bus
-eval $(dbus-launch --sh-syntax)
+eval $(apptainer exec instance://$INSTANCE_NAME dbus-launch --sh-syntax)
 
 # Launch Xfce Window Manager and Panel
 export SEND_256_COLORS_TO_REMOTE=1
@@ -116,4 +116,4 @@ export APPTAINERENV_PATH=$PATH
 
 sleep 5
 
-apptainer exec instance://$INSTANCE_NAME xfce4-session
+apptainer exec instance://$INSTANCE_NAME startxfce4

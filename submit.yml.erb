@@ -5,7 +5,7 @@ batch_connect:
   websockify_cmd: "/usr/bin/websockify --verbose --log-file websockify.log"
   before_script: "export JOBNAME=$(pwd | rev | cut -d '/' -f3 | rev) "
   container_path: "/storage/research/dsl_vibe_rs/environments/$(pwd | rev | cut -d '/' -f3 | rev)/desktop/images/rocky9_minimal_xfce-latest.sif"
-  container_bindpath: "/scratch,/storage,/sys/fs/cgroup"
+  container_bindpath: "$(mktemp -d):/tmp,/scratch,/storage,/sys/fs/cgroup"
   container_module: "Anaconda3"
   container_command: "apptainer"
   container_start_args:
