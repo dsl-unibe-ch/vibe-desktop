@@ -18,7 +18,6 @@ script:
     - "--qos=job_gratis"
     - "--account=gratis"
     - "--time=1:00:00"
-    - "--job-name=$(pwd | rev | cut -d '/' -f3 | rev)"
 <%- if email_on_start == "1" and not email.blank? -%>
     - "--mail-type=BEGIN"
     - "--mail-user=<%= email %>"
