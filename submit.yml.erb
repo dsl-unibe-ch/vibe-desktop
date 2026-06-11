@@ -21,7 +21,6 @@ script:
     - "--wckey=<%= global_wckey %>"
 <%- end -%>
     - "--time=<%= bc_num_hours.blank? ? 1 : bc_num_hours.to_i %>:00:00"
-    - "--job-name=$(pwd | rev | cut -d '/' -f3 | rev)"
 <%- if global_num_gpus.to_i > 0 -%>
     - "--gres=gpu:<%= global_type_gpu.blank? ? rtx4090 : global_type_gpu %>:<%= global_num_gpus.blank? ? 1 : global_num_gpus %>"
 <%- end -%>
