@@ -19,7 +19,7 @@ echo "[User Login Script] User profile data located at $PROFILE_DIR"
 /usr/bin/mkdir -p "$(dirname ${WALLPAPER})"
 ## Ensure the vibe wallpaper is available for the user if it is missing
 if [ ! -f ${WALLPAPER} ]; then
-    cp ${STORAGE_LOCATION}/desktop/vibe_wallpaper.png ${WALLPAPER}
+    cp ${STORAGE_LOCATION}/desktop/${VIBE_STAGE}_wallpaper.png ${WALLPAPER}
 
     # Set the wallpaper image
     apptainer exec instance://$INSTANCE_NAME xfconf-query -c xfce4-desktop -p /backdrop/screen0/monitorVNC-0/workspace0/last-image -s ${WALLPAPER} -t string --create
@@ -32,7 +32,7 @@ if [ ! -f ${WALLPAPER} ]; then
 fi
 
 ## Replace the wallpaper if the default changed
-if [ $(md5sum ${STORAGE_LOCATION}/desktop/vibe_wallpaper.png | cut -d " " -f1) != $(md5sum ${WALLPAPER} | cut -d " " -f1) ]; then
+if [ $(md5sum ${STORAGE_LOCATION}/desktop/${VIBE_STAGE}_wallpaper.png | cut -d " " -f1) != $(md5sum ${WALLPAPER} | cut -d " " -f1) ]; then
   cp ${STORAGE_LOCATION}/desktop/vibe_wallpaper.png ${WALLPAPER}
 fi
 
@@ -110,3 +110,15 @@ sed -i "s/WebBrowser=firefox/WebBrowser=custom-WebBrowser/g" $helpers_rc_path
 gio mime text/html xfce4-web-browser.desktop
 gio mime x-scheme-handler/http xfce4-web-browser.desktop
 gio mime x-scheme-handler/https xfce4-web-browser.desktop
+
+# Set the session end reminder notification
+## Get the session time limit from SLURM
+slurm_time_limit=$(scontrol show jobid $SLURM_JOB_ID --json | jq '.jobs[].time_limit.number')
+warning_timeout=$(($slurm_time_limit * 60 - 300))
+## Queue session timeout warning 5 minutes before session expires
+if [ $warning_timeout > 0 ]; then
+  echo "[User Login Script] Setting the session timeout notification for the user in $(($warning_timeout / 60)) mins..."
+  sleep $warning_timeout && echo "Triggering session timeout warning for the user." && apptainer exec instance://$INSTANCE_NAME yad --title="Session Timeout Warning" --text="Your VIBE Desktop session is about to end in 5 minutes.\nPlease make sure to save your data before being logged out to prevent data loss and start a new session if needed." --text-align=center --window-icon=/storage/homefs/jm25l486/.vibe/vibe-desktop-dev/.local/share/icons/vibe/vibe_logo.png --button=OK --buttons-layout=center --display=$DISPLAY &
+fi
+
+echo "[User Login Script] End of user login script..."
