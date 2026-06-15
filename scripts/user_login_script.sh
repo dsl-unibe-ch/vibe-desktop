@@ -66,9 +66,9 @@ fi
 cp ${STORAGE_LOCATION}/desktop/menu/vibe.menu ${MENU_FILE}
 
 ## Ensure that the "<Menuname>VIBE</Menuname>" entry exists in the layout section of the xfce-applications.menu file
-### Copy the default menu if no custom configuration exists yet
+### Copy the default menu inside the container if no custom configuration exists yet
 if [ ! -f ${XDG_CONFIG_HOME}/menus/xfce-applications.menu ]; then
-  cp /etc/xdg/menus/xfce-applications.menu ${XDG_CONFIG_HOME}/menus/xfce-applications.menu
+  apptainer exec instance://$INSTANCE_NAME cp /etc/xdg/menus/xfce-applications.menu ${XDG_CONFIG_HOME}/menus/xfce-applications.menu
 fi
 
 ### Add the entry for VIBE to the layout if it does not exist yet
@@ -85,10 +85,6 @@ cp -r ${STORAGE_LOCATION}/desktop/menu/icons/* ${PROFILE_DIR}/${ICON_PATH}/
 ## Set the proper icon path
 sed -i "s|#HOME#|${PROFILE_DIR}|g" ${APPLICATION_DIR}/*
 sed -i "s|#HOME#|${PROFILE_DIR}|g" ${DIRECTORY_DIR}/*
-
-# [Screensaver] Disable the screensaver (as it causes the VNC connection to close)
-xset s off
-xset s noblank
 
 # [Default Browser] Overwrite firefox with containerized version
 ## Ensure the users local folder exists
@@ -107,9 +103,9 @@ if [ ! -f $helpers_rc_path ]; then
 fi
 sed -i "s/WebBrowser=firefox/WebBrowser=custom-WebBrowser/g" $helpers_rc_path
 ## Set the custom browser as default for the html mime types
-gio mime text/html xfce4-web-browser.desktop
-gio mime x-scheme-handler/http xfce4-web-browser.desktop
-gio mime x-scheme-handler/https xfce4-web-browser.desktop
+apptainer exec instance://$INSTANCE_NAME gio mime text/html xfce4-web-browser.desktop
+apptainer exec instance://$INSTANCE_NAME gio mime x-scheme-handler/http xfce4-web-browser.desktop
+apptainer exec instance://$INSTANCE_NAME gio mime x-scheme-handler/https xfce4-web-browser.desktop
 
 # Set the session end reminder notification
 ## Get the session time limit from SLURM
