@@ -27,7 +27,7 @@ From: rockylinux/rockylinux:9-minimal
   dnf install -y python3-websockify perl
 
   # Additional desktop packages
-  dnf install -y vte-profile tree ristretto mousepad nano vim
+  dnf install -y vte-profile tree ristretto mousepad nano vim yad
   
   # Install TurboVNC
   wget -O /etc/yum.repos.d/TurboVNC.repo https://raw.githubusercontent.com/TurboVNC/repo/main/TurboVNC.repo
