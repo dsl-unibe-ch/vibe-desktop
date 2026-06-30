@@ -110,6 +110,7 @@ apptainer exec instance://$INSTANCE_NAME gio mime text/html xfce4-web-browser.de
 apptainer exec instance://$INSTANCE_NAME gio mime x-scheme-handler/http xfce4-web-browser.desktop
 apptainer exec instance://$INSTANCE_NAME gio mime x-scheme-handler/https xfce4-web-browser.desktop
 
+
 # Set the session end reminder notification
 ## Get the session time limit from SLURM
 slurm_time_limit=$(scontrol show jobid $SLURM_JOB_ID --json | jq '.jobs[].time_limit.number')
