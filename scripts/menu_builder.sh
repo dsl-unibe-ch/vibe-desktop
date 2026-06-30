@@ -96,7 +96,7 @@ unset CONTAINER_LIST
 unset CATEGORY_LIST
 
 # Find and copy all icon files to the default icon directory
-find $BUILD_FILE_DIR -maxdepth 3 -type f -name \*.ico -o -name \*.svg -o -name \*.png -exec cp "{}" $DEFAULTS_ICON_DIR \;
+find $BUILD_FILE_DIR -maxdepth 3 -type f -name \*.ico -o -name \*.svg -o -name \*.png | xargs -i cp '{}' $DEFAULTS_ICON_DIR
 cp $DEFAULT_ICON $DEFAULTS_ICON_DIR
 
 # Remove the old desktop files
@@ -222,7 +222,7 @@ rm -f $DEFAULTS_DIRECTORY_DIR/vibe-*.directory
 ICONNAME=$(get_icon "vibe")
 
 # Create the top 'VIBE' menu entry (static)
-echo -e "[Desktop Entry]\nVersion=1.1\nType=Directory\nName=VIBE\nIcon=folder" > $DEFAULTS_DIRECTORY_DIR/vibe.directory
+echo -e "[Desktop Entry]\nVersion=1.1\nType=Directory\nName=VIBE\nIcon=#HOME#/$ICON_PATH/$(basename $DEFAULT_ICON)" > $DEFAULTS_DIRECTORY_DIR/vibe.directory
 
 if [ $DEBUG == 'true' ]; then
   echo -e "\nCreating the menu file $DEFAULTS_MENU_FILE:"
@@ -239,6 +239,8 @@ echo -e "<Menu>\n<Name>VIBE</Name>\n<Directory>vibe.directory</Directory>" >> $D
 echo -e "<Include>\n<Category>vibe</Category>\n</Include>" >> $DEFAULTS_MENU_FILE
 
 ## VIBE Documentation
+### Copy the vibe_help.png icon
+cp $STAGE_DIR/desktop/vibe_help.png $DEFAULTS_ICON_DIR
 ### Create the VIBE Documentation entry at top level
 echo -e "[Desktop Entry]\nName=VIBE Documentation\nExec=$APPLICATION_LAUNCHER_SCRIPT $CONTAINER_IMAGE_FOLDER/firefox-base-latest.sif firefox $VIBE_DOCUMENTATION_URL\nIcon=#HOME#/$ICON_PATH/vibe_help.png\nTerminal=true\nType=Application\nCategories=vibe" > $DEFAULTS_APPLICATION_DIR/vibe-documentation.desktop
 
