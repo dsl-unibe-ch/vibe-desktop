@@ -110,7 +110,6 @@ apptainer exec instance://$INSTANCE_NAME gio mime text/html xfce4-web-browser.de
 apptainer exec instance://$INSTANCE_NAME gio mime x-scheme-handler/http xfce4-web-browser.desktop
 apptainer exec instance://$INSTANCE_NAME gio mime x-scheme-handler/https xfce4-web-browser.desktop
 
-
 # Set the session end reminder notification
 ## Get the session time limit from SLURM
 slurm_time_limit=$(scontrol show jobid $SLURM_JOB_ID --json | jq '.jobs[].time_limit.number')
@@ -119,6 +118,49 @@ warning_timeout=$(($slurm_time_limit * 60 - 300))
 if [ $warning_timeout > 0 ]; then
   echo "[User Login Script] Setting the session timeout notification for the user in $(($warning_timeout / 60)) mins..."
   sleep $warning_timeout && echo "Triggering session timeout warning for the user." && apptainer exec instance://$INSTANCE_NAME yad --title="Session Timeout Warning" --text="Your VIBE Desktop session is about to end in 5 minutes.\nPlease make sure to save your data before being logged out to prevent data loss and start a new session if needed." --text-align=center --window-icon=/storage/homefs/jm25l486/.vibe/vibe-desktop-dev/.local/share/icons/vibe/vibe_logo.png --button=OK --buttons-layout=center --display=$DISPLAY &
+fi
+
+# Read maintenance config file which may be located in the private folder: /storage/research/dsl_vibe_rs/private/
+# Based on the configuration, we set IS_MAINTENANCE_MODE to 1 or 0
+MAINTENANCE_CONFIG="/storage/research/dsl_vibe_rs/private/maintenance.conf"
+
+# Defaults (used if no config file exists, or the file doesn't set them)
+IS_MAINTENANCE_MODE=0
+MAINTENANCE_MESSAGE=""
+MAINTENANCE_MESSAGE_TYPE="info"
+MAINTENANCE_START=""
+MAINTENANCE_END=""
+MAINTENANCE_CONTACT=""
+
+if [ -f "$MAINTENANCE_CONFIG" ]; then
+  echo "[User Login Script] Found maintenance config file. Loading maintenance settings..."
+  # shellcheck disable=SC1090
+  source "$MAINTENANCE_CONFIG"
+else
+  echo "[User Login Script] No maintenance config file found at $MAINTENANCE_CONFIG. Skipping maintenance check."
+fi
+
+# display a notification to the user if maintenance mode is enabled using yad
+if [ "$IS_MAINTENANCE_MODE" -eq 1 ]; then
+
+  # Pick an icon depending on the maintenance message type (info, warning, error)
+  case "$MAINTENANCE_MESSAGE_TYPE" in
+    warning) YAD_ICON="dialog-warning" ;;
+    error)   YAD_ICON="dialog-error" ;;
+    *)       YAD_ICON="dialog-information" ;;
+  esac
+  
+  apptainer exec --env LC_ALL=C.UTF-8,LANG=C.UTF-8 instance://$INSTANCE_NAME yad \
+  --title="VIBE Unavailable - Scheduled Maintenance" \
+  --center \
+  --image="$YAD_ICON" \
+  --text="${MAINTENANCE_MESSAGE}\n\nStart: ${MAINTENANCE_START}\nEnd:   ${MAINTENANCE_END}\nContact: ${MAINTENANCE_CONTACT}" \
+  --text-align=center \
+  --window-icon="${PROFILE_DIR}/.local/share/icons/vibe/vibe_logo.png" \
+  --button=OK \
+  --buttons-layout=center \
+  --display=$DISPLAY &
+  
 fi
 
 echo "[User Login Script] End of user login script..."

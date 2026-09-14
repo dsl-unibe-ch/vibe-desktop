@@ -27,13 +27,18 @@ From: rockylinux/rockylinux:9-minimal
   dnf install -y python3-websockify perl
 
   # Additional desktop packages
-  dnf install -y vte-profile tree ristretto mousepad nano vim yad
+  dnf install -y vte-profile tree ristretto mousepad nano vim yad git evince
   
   # Install TurboVNC
   wget -O /etc/yum.repos.d/TurboVNC.repo https://raw.githubusercontent.com/TurboVNC/repo/main/TurboVNC.repo
   dnf install -y turbovnc
 
+  # Install peazip
+  wget -P /opt https://github.com/peazip/PeaZip/releases/download/11.1.0/peazip-11.1.0.LINUX.GTK2-1.x86_64.rpm
+  dnf install -y /opt/peazip-11.1.0.LINUX.GTK2-1.x86_64.rpm
+
   # Cleanup
   dnf clean all
   rm -rf /var/cache/dnf/*
   rm -f /var/log/*.log
+  rm -f /opt/peazip-11.1.0.LINUX.GTK2-1.x86_64.rpm
