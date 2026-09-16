@@ -1,0 +1,13 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+authors:
+  - family-names: "Witz"
+    given-names: "Guillaume"
+    orcid: "https://orcid.org/0000-0003-1562-4265"
+  - family-names: "Lopez Dicuru"
+    given-names: "Ruben Jose"
+    orcid: "https://orcid.org/0000-0002-3802-3158"
+title: "VIBE Desktop"
+version: 1.0.0
+date-released: 2026-05-12
+url: "https://github.com/dsl-unibe-ch/vibe-desktop" 

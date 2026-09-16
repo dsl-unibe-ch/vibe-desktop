@@ -53,6 +53,11 @@ export APPTAINERENV_SEND_256_COLORS_TO_REMOTE="$SEND_256_COLORS_TO_REMOTE"
 export APPTAINERENV_DBUS_SESSION_BUS_ADDRESS=$DBUS_SESSION_BUS_ADDRESS
 export APPTAINERENV_DBUS_SESSION_BUS_PID=$DBUS_SESSION_BUS_PID
 
+# Force a per-job ICE authority file so we don't touch the stale/shared
+# ~/.ICEauthority on the network home.
+export ICEAUTHORITY="${TMPDIR:-/tmp}/ICEauthority.${SLURM_JOB_ID:-$$}"
+export APPTAINERENV_ICEAUTHORITY="$ICEAUTHORITY"
+
 # Remove any preconfigured monitors
 if [[ -f "${PROFILE_DIR}/.config/monitors.xml" ]]; then
   mv "${PROFILE_DIR}/.config/monitors.xml" "${PROFILE_DIR}/.config/monitors.xml.bak"
@@ -114,6 +119,27 @@ PATH="$SAFE_PATH" source /storage/research/dsl_vibe_rs/environments/${VIBE_STAGE
 
 export APPTAINERENV_PATH=$PATH
 
-sleep 5
+apptainer exec instance://$INSTANCE_NAME sh -c '
+  mkdir -p /tmp/.ICE-unix && chmod 1777 /tmp/.ICE-unix
+  : > "$ICEAUTHORITY" && chmod 600 "$ICEAUTHORITY"
 
-apptainer exec instance://$INSTANCE_NAME startxfce4
+  # xfce4-session occasionally fails to establish its ICE listener with a
+  # "SocketCreateListener() failed / server already running" error under load
+  # or concurrent launches. Root cause is not confirmed, but a plain retry
+  # in a fresh process consistently recovers.
+  for attempt in 1 2 3 4 5; do
+    rm -f /tmp/.ICE-unix/* 2>/dev/null
+    : > "$ICEAUTHORITY"
+    start=$(date +%s)
+    xfce4-session 2>&1
+    rc=$?
+    dur=$(( $(date +%s) - start ))
+    if [ "$rc" -eq 0 ] || [ "$dur" -ge 10 ]; then
+      exit "$rc"
+    fi
+    echo "[xfce4-session] early exit rc=$rc after ${dur}s on attempt ${attempt}, retrying..." >&2
+    sleep 1
+  done
+  echo "[xfce4-session] gave up after 5 failed attempts" >&2
+  exit 1
+'

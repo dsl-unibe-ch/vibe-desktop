@@ -10,7 +10,6 @@
 # Icon must end with two \r
 Icon
 
-
 # Thumbnails
 ._*
 
@@ -43,3 +42,6 @@ Temporary Items
 
 # End of https://www.toptal.com/developers/gitignore/api/macos
 .vscode/settings.json
+
+# Apptainer Images
+**/*.sif
