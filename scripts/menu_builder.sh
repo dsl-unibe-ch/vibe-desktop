@@ -13,6 +13,8 @@ STORAGE_LOCATION="/storage/research/dsl_vibe_rs"
 STAGE_DIR="$STORAGE_LOCATION/environments/$STAGE"
 BUILD_FILE_DIR="$STORAGE_LOCATION/repos/vibe-applications${STAGE/vibe-desktop/}"
 CONTAINER_IMAGE_FOLDER="$STAGE_DIR/containers"
+# Archived containers are shared across stages
+ARCHIVE_CONTAINER_FOLDER="$STORAGE_LOCATION/archive/containers"
 APPLICATION_LAUNCHER_SCRIPT="$STAGE_DIR/scripts/application_launcher.sh"
 DEFAULTS_APPLICATION_DIR="$STAGE_DIR/desktop/menu/applications"
 DEFAULTS_DIRECTORY_DIR="$STAGE_DIR/desktop/menu/desktop-directories"
@@ -374,9 +376,91 @@ done
 ## end [Applications -> VIBE -> Workflows] section
 echo -e "</Menu>" >> $DEFAULTS_MENU_FILE
 
+## Archive
+
+### Find all archived container images and build a per-application-label menu structure
+if [ -d "$ARCHIVE_CONTAINER_FOLDER" ]; then
+  for file in $(find $ARCHIVE_CONTAINER_FOLDER -mindepth 3 -maxdepth 3 -type f -iname '*.sif'); do
+    filename=$(basename $file)
+    container_name="${filename%.*}"
+
+    label_application=$(apptainer inspect $file | awk '/Application/ {sub($1 FS,""); print $0}')
+
+    if [ -z "$label_application" ]; then
+      if [ $DEBUG == 'true' ]; then
+        echo "No Application label found in archived container $file. Skipping."
+      fi
+      continue
+    fi
+
+    for application in $label_application; do
+
+      if [ $DEBUG == 'true' ]; then
+        echo "Processing archived container $container_name, Application $application"
+      fi
+
+      echo "$application" >> $TMP_DIR/archive_application_list.txt
+
+      if [[ $filename == "$application"* ]]; then
+        ICONNAME=$(get_icon "$filename")
+      else
+        ICONNAME=$(get_icon "$application")
+      fi
+
+      desktop_entry_name="$application (${container_name//_/__}) [VIBE archive]"
+      echo -e "[Desktop Entry]\nName=$desktop_entry_name\nExec=$APPLICATION_LAUNCHER_SCRIPT $file $application\nIcon=#HOME#/$ICON_PATH/$ICONNAME\nTerminal=true\nType=Application\nCategories=vibe-archive-$application" > $DEFAULTS_APPLICATION_DIR/vibe-archive-"$application"_"$container_name".desktop
+    done
+  done
+fi
+
+if [ -f $TMP_DIR/archive_application_list.txt ]; then
+  SORTED_ARCHIVE_APPLICATION_LIST=$(cat $TMP_DIR/archive_application_list.txt | sort | uniq)
+fi
+
+if [ $DEBUG == 'true' ]; then
+  echo ""
+  echo "SORTED_ARCHIVE_APPLICATION_LIST"
+  echo "$SORTED_ARCHIVE_APPLICATION_LIST"
+fi
+
+### Create top archive menu directory (static)
+if [[ -n $SORTED_ARCHIVE_APPLICATION_LIST ]]; then
+  ICONNAME=$(get_icon "vibe-archive")
+  echo -e "[Desktop Entry]\nVersion=1.1\nType=Directory\nName=VIBE Archive\nIcon=#HOME#/$ICON_PATH/$ICONNAME" > $DEFAULTS_DIRECTORY_DIR/vibe-archive.directory
+fi
+
+### [Applications -> VIBE -> Archive] section
+echo -e "<Menu>\n<Name>Archive</Name>\n<Directory>vibe-archive.directory</Directory>" >> $DEFAULTS_MENU_FILE
+
+### individual entries for each application label
+for arcappentry in $SORTED_ARCHIVE_APPLICATION_LIST; do
+  if [ $DEBUG == 'true' ]; then
+    echo "Processing archive application entry $arcappentry"
+  fi
+
+  ICONNAME=$(get_icon "$arcappentry")
+
+  #### Create sub menu directory for the archive application
+  echo -e "[Desktop Entry]\nVersion=1.1\nType=Directory\nName=$arcappentry\nIcon=#HOME#/$ICON_PATH/$ICONNAME" > $DEFAULTS_DIRECTORY_DIR/vibe-archive-$arcappentry.directory
+
+  #### Add sub menu entry to menu file.
+  echo -e "<Menu>\n<Name>$arcappentry</Name>\n<Directory>vibe-archive-$arcappentry.directory</Directory>\n<Include>\n<Category>vibe-archive-$arcappentry</Category>\n</Include>\n</Menu>" >> $DEFAULTS_MENU_FILE
+done
+
+## end [Applications -> VIBE -> Archive] section
+echo -e "</Menu>" >> $DEFAULTS_MENU_FILE
+
 ## static end of the menu structure
 ## end [Applications -> VIBE]
 echo -e "</Menu>\n</Menu>" >> $DEFAULTS_MENU_FILE
+
+# Ensure the menu files and folders are accessible to all users
+if [ $DEBUG == 'true' ]; then
+  echo "Setting permissions inside $STAGE_DIR/desktop/ to 775 (directories) / 664 (files)"
+fi
+
+find $STAGE_DIR/desktop/ -type d -exec chmod 0775 {} +
+find $STAGE_DIR/desktop/ -type f -exec chmod 0664 {} +
 
 # Cleanup: Remove temp files
 if [ $DEBUG == 'true' ]; then
